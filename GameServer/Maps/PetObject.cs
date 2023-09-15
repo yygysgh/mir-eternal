@@ -703,20 +703,20 @@ namespace GameServer.Maps
 					base.HealTime = MainProcess.CurrentTime.AddMilliseconds(500.0);
 					this.CurrentHP += base.TreatmentBase;
 				}
-				if (this.EnterCombatSkills != null && !base.FightingStance && this.HateObject.仇恨列表.Count != 0)
+				if (this.EnterCombatSkills != null && !base.FightingStance && this.HateObject.HateDic.Count != 0)
 				{
 					new SkillInstance(this, EnterCombatSkills, null, ActionId++, this.CurrentMap, this.CurrentPosition, null, this.CurrentPosition, null, null, false);
 					base.FightingStance = true;
 					base.TimeoutTime = MainProcess.CurrentTime.AddSeconds(10.0);
 				}
-				else if (this.ExitCombatSkills != null && base.FightingStance && this.HateObject.仇恨列表.Count == 0 && MainProcess.CurrentTime > base.TimeoutTime)
+				else if (this.ExitCombatSkills != null && base.FightingStance && this.HateObject.HateDic.Count == 0 && MainProcess.CurrentTime > base.TimeoutTime)
 				{
 					new SkillInstance(this, ExitCombatSkills, null, ActionId++, this.CurrentMap, this.CurrentPosition, null, this.CurrentPosition, null, null, false);
 					base.FightingStance = false;
 				}
 				else if (this.PlayerOwner.PetMode == PetMode.Attack && MainProcess.CurrentTime > this.BusyTime && MainProcess.CurrentTime > this.HardTime)
 				{
-					if (this.HateObject.当前目标 == null && !this.Neighbors.Contains(this.PlayerOwner))
+					if (this.HateObject.CurrentTarget == null && !this.Neighbors.Contains(this.PlayerOwner))
 					{
 						this.宠物智能跟随();
 					}
@@ -864,11 +864,11 @@ namespace GameServer.Maps
 				}
 				游戏技能 = this.NormalAttackSkills;
 			}
-			if (base.GetDistance(this.HateObject.当前目标) > (int)游戏技能.MaxDistance)
+			if (base.GetDistance(this.HateObject.CurrentTarget) > (int)游戏技能.MaxDistance)
 			{
 				if (this.CanMove())
 				{
-					GameDirection GameDirection = ComputingClass.GetDirection(this.CurrentPosition, this.HateObject.当前目标.CurrentPosition);
+					GameDirection GameDirection = ComputingClass.GetDirection(this.CurrentPosition, this.HateObject.CurrentTarget.CurrentPosition);
 					bool flag = false;
 					int i = 0;
 					while (i < 10)
@@ -895,7 +895,7 @@ namespace GameServer.Maps
 							IL_1F9:
 							if (!flag)
 							{
-								this.HateObject.移除仇恨(this.HateObject.当前目标);
+								this.HateObject.RemoveHateObject(this.HateObject.CurrentTarget);
 								return;
 							}
 							return;
@@ -908,13 +908,13 @@ namespace GameServer.Maps
 			{
 				if (MainProcess.CurrentTime > this.Attack时间)
 				{
-					new SkillInstance(this, 游戏技能, null, ActionId++, this.CurrentMap, this.CurrentPosition, this.HateObject.当前目标, this.HateObject.当前目标.CurrentPosition, null, null, false);
+					new SkillInstance(this, 游戏技能, null, ActionId++, this.CurrentMap, this.CurrentPosition, this.HateObject.CurrentTarget, this.HateObject.CurrentTarget.CurrentPosition, null, null, false);
 					this.Attack时间 = MainProcess.CurrentTime.AddMilliseconds((double)(ComputingClass.ValueLimit(0, 10 - this[GameObjectStats.AttackSpeed], 10) * 500));
 					return;
 				}
 				if (this.CanBeTurned())
 				{
-					this.CurrentDirection = ComputingClass.GetDirection(this.CurrentPosition, this.HateObject.当前目标.CurrentPosition);
+					this.CurrentDirection = ComputingClass.GetDirection(this.CurrentPosition, this.HateObject.CurrentTarget.CurrentPosition);
 				}
 			}
 		}
@@ -993,50 +993,50 @@ namespace GameServer.Maps
 		
 		public bool 更新HateObject()
 		{
-			if (this.HateObject.仇恨列表.Count == 0)
+			if (this.HateObject.HateDic.Count == 0)
 			{
 				return false;
 			}
-			if (this.HateObject.当前目标 == null)
+			if (this.HateObject.CurrentTarget == null)
 			{
-				this.HateObject.切换时间 = default(DateTime);
+				this.HateObject.SwitchTime = default(DateTime);
 			}
-			else if (this.HateObject.当前目标.Died)
+			else if (this.HateObject.CurrentTarget.Died)
 			{
-				this.HateObject.移除仇恨(this.HateObject.当前目标);
+				this.HateObject.RemoveHateObject(this.HateObject.CurrentTarget);
 			}
-			else if (!this.Neighbors.Contains(this.HateObject.当前目标))
+			else if (!this.Neighbors.Contains(this.HateObject.CurrentTarget))
 			{
-				this.HateObject.移除仇恨(this.HateObject.当前目标);
+				this.HateObject.RemoveHateObject(this.HateObject.CurrentTarget);
 			}
-			else if (!this.HateObject.仇恨列表.ContainsKey(this.HateObject.当前目标))
+			else if (!this.HateObject.HateDic.ContainsKey(this.HateObject.CurrentTarget))
 			{
-				this.HateObject.移除仇恨(this.HateObject.当前目标);
+				this.HateObject.RemoveHateObject(this.HateObject.CurrentTarget);
 			}
-			else if (this.PlayerOwner.GetRelationship(this.HateObject.当前目标) != GameObjectRelationship.Hostility)
+			else if (this.PlayerOwner.GetRelationship(this.HateObject.CurrentTarget) != GameObjectRelationship.Hostility)
 			{
-				this.HateObject.移除仇恨(this.HateObject.当前目标);
+				this.HateObject.RemoveHateObject(this.HateObject.CurrentTarget);
 			}
-			else if (base.GetDistance(this.HateObject.当前目标) > this.RangeHate && MainProcess.CurrentTime > this.HateObject.仇恨列表[this.HateObject.当前目标].仇恨时间)
+			else if (base.GetDistance(this.HateObject.CurrentTarget) > this.RangeHate && MainProcess.CurrentTime > this.HateObject.HateDic[this.HateObject.CurrentTarget].HateTime)
 			{
-				this.HateObject.移除仇恨(this.HateObject.当前目标);
+				this.HateObject.RemoveHateObject(this.HateObject.CurrentTarget);
 			}
-			else if (base.GetDistance(this.HateObject.当前目标) <= this.RangeHate)
+			else if (base.GetDistance(this.HateObject.CurrentTarget) <= this.RangeHate)
 			{
-				this.HateObject.仇恨列表[this.HateObject.当前目标].仇恨时间 = MainProcess.CurrentTime.AddMilliseconds((double)this.HateTime);
+				this.HateObject.HateDic[this.HateObject.CurrentTarget].HateTime = MainProcess.CurrentTime.AddMilliseconds((double)this.HateTime);
 			}
-			if (this.HateObject.切换时间 < MainProcess.CurrentTime && this.HateObject.切换仇恨(this))
+			if (this.HateObject.SwitchTime < MainProcess.CurrentTime && this.HateObject.切换仇恨(this))
 			{
-				this.HateObject.切换时间 = MainProcess.CurrentTime.AddMilliseconds((double)this.切换间隔);
+				this.HateObject.SwitchTime = MainProcess.CurrentTime.AddMilliseconds((double)this.切换间隔);
 			}
-			return this.HateObject.当前目标 != null || this.更新HateObject();
+			return this.HateObject.CurrentTarget != null || this.更新HateObject();
 		}
 
 		
 		public void 清空宠物仇恨()
 		{
-			this.HateObject.当前目标 = null;
-			this.HateObject.仇恨列表.Clear();
+			this.HateObject.CurrentTarget = null;
+			this.HateObject.HateDic.Clear();
 		}
 
 		

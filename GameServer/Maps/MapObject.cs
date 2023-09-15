@@ -1380,7 +1380,7 @@ namespace GameServer.Maps
                     MonsterObject2.HardTime = MainProcess.CurrentTime.AddMilliseconds((double)参数.目标硬直时间);
                     if (MapObject is PlayerObject || MapObject is PetObject)
                     {
-                        MonsterObject2.HateObject.添加仇恨(MapObject, MainProcess.CurrentTime.AddMilliseconds((double)MonsterObject2.HateTime), 详情.Damage);
+                        MonsterObject2.HateObject.AddHateObject(MapObject, MainProcess.CurrentTime.AddMilliseconds((double)MonsterObject2.HateTime), 详情.Damage);
                     }
                 }
                 else
@@ -1402,7 +1402,7 @@ namespace GameServer.Maps
                             {
                                 if (PetObject.Neighbors.Contains(MapObject) && !MapObject.CheckStatus(GameObjectState.Invisibility | GameObjectState.StealthStatus))
                                 {
-                                    PetObject.HateObject.添加仇恨(MapObject, MainProcess.CurrentTime.AddMilliseconds((double)PetObject.HateTime), 0);
+                                    PetObject.HateObject.AddHateObject(MapObject, MainProcess.CurrentTime.AddMilliseconds((double)PetObject.HateTime), 0);
                                 }
                             }
                         }
@@ -1446,7 +1446,7 @@ namespace GameServer.Maps
                                 {
                                     if (PetObject4.Neighbors.Contains(MapObject) && !MapObject.CheckStatus(GameObjectState.Invisibility | GameObjectState.StealthStatus))
                                     {
-                                        PetObject4.HateObject.添加仇恨(MapObject, MainProcess.CurrentTime.AddMilliseconds((double)PetObject4.HateTime), 0);
+                                        PetObject4.HateObject.AddHateObject(MapObject, MainProcess.CurrentTime.AddMilliseconds((double)PetObject4.HateTime), 0);
                                     }
                                 }
                             }
@@ -1464,7 +1464,7 @@ namespace GameServer.Maps
                             GuardObject GuardInstance = this as GuardObject;
                             if (GuardInstance != null && GuardInstance.GetRelationship(MapObject) == GameObjectRelationship.Hostility)
                             {
-                                GuardInstance.HateObject.添加仇恨(MapObject, default(DateTime), 0);
+                                GuardInstance.HateObject.AddHateObject(MapObject, default(DateTime), 0);
                             }
                         }
                     }
@@ -1478,7 +1478,7 @@ namespace GameServer.Maps
                         {
                             if (PetObject5.Neighbors.Contains(this))
                             {
-                                PetObject5.HateObject.添加仇恨(this, MainProcess.CurrentTime.AddMilliseconds((double)PetObject5.HateTime), 参数.增加宠物仇恨 ? 详情.Damage : 0);
+                                PetObject5.HateObject.AddHateObject(this, MainProcess.CurrentTime.AddMilliseconds((double)PetObject5.HateTime), 参数.增加宠物仇恨 ? 详情.Damage : 0);
                             }
                         }
                     }
@@ -1810,21 +1810,21 @@ namespace GameServer.Maps
         }
 
 
-        public void 对象移动时处理(MapObject 对象)
+        public void 对象移动时处理(MapObject 对象) //参数是移动对象,this是能看到参数对象的邻居
         {
             if (!(this is ItemObject))
             {
                 PetObject PetObject = this as PetObject;
                 if (PetObject != null)
                 {
-                    HateObject.仇恨详情 仇恨详情;
+                    HateObject.HateDetail 仇恨详情;
                     if (PetObject.CanAttack(对象) && this.GetDistance(对象) <= PetObject.RangeHate && !对象.CheckStatus(GameObjectState.Invisibility | GameObjectState.StealthStatus))
                     {
-                        PetObject.HateObject.添加仇恨(对象, default(DateTime), 0);
+                        PetObject.HateObject.AddHateObject(对象, default(DateTime), 0);
                     }
-                    else if (this.GetDistance(对象) > PetObject.RangeHate && PetObject.HateObject.仇恨列表.TryGetValue(对象, out 仇恨详情) && 仇恨详情.仇恨时间 < MainProcess.CurrentTime)
+                    else if (this.GetDistance(对象) > PetObject.RangeHate && PetObject.HateObject.HateDic.TryGetValue(对象, out 仇恨详情) && 仇恨详情.HateTime < MainProcess.CurrentTime)
                     {
-                        PetObject.HateObject.移除仇恨(对象);
+                        PetObject.HateObject.RemoveHateObject(对象);
                     }
                 }
                 else
@@ -1832,14 +1832,14 @@ namespace GameServer.Maps
                     MonsterObject MonsterObject = this as MonsterObject;
                     if (MonsterObject != null)
                     {
-                        HateObject.仇恨详情 仇恨详情2;
+                        HateObject.HateDetail 仇恨详情2;
                         if (this.GetDistance(对象) <= MonsterObject.RangeHate && MonsterObject.CanAttack(对象) && (MonsterObject.VisibleStealthTargets || !对象.CheckStatus(GameObjectState.Invisibility | GameObjectState.StealthStatus)))
                         {
-                            MonsterObject.HateObject.添加仇恨(对象, default(DateTime), 0);
+                            MonsterObject.HateObject.AddHateObject(对象, default(DateTime), 0);
                         }
-                        else if (this.GetDistance(对象) > MonsterObject.RangeHate && MonsterObject.HateObject.仇恨列表.TryGetValue(对象, out 仇恨详情2) && 仇恨详情2.仇恨时间 < MainProcess.CurrentTime)
+                        else if (this.GetDistance(对象) > MonsterObject.RangeHate && MonsterObject.HateObject.HateDic.TryGetValue(对象, out 仇恨详情2) && 仇恨详情2.HateTime < MainProcess.CurrentTime)
                         {
-                            MonsterObject.HateObject.移除仇恨(对象);
+                            MonsterObject.HateObject.RemoveHateObject(对象);
                         }
                     }
                     else
@@ -1859,11 +1859,11 @@ namespace GameServer.Maps
                             {
                                 if (GuardInstance.CanAttack(对象) && this.GetDistance(对象) <= GuardInstance.RangeHate)
                                 {
-                                    GuardInstance.HateObject.添加仇恨(对象, default(DateTime), 0);
+                                    GuardInstance.HateObject.AddHateObject(对象, default(DateTime), 0);
                                 }
                                 else if (this.GetDistance(对象) > GuardInstance.RangeHate)
                                 {
-                                    GuardInstance.HateObject.移除仇恨(对象);
+                                    GuardInstance.HateObject.RemoveHateObject(对象);
                                 }
                             }
                         }
@@ -1877,13 +1877,13 @@ namespace GameServer.Maps
                 {
                     if (PetObject2.GetDistance(this) <= PetObject2.RangeHate && PetObject2.CanAttack(this) && !this.CheckStatus(GameObjectState.Invisibility | GameObjectState.StealthStatus))
                     {
-                        PetObject2.HateObject.添加仇恨(this, default(DateTime), 0);
+                        PetObject2.HateObject.AddHateObject(this, default(DateTime), 0);
                         return;
                     }
-                    HateObject.仇恨详情 仇恨详情3;
-                    if (PetObject2.GetDistance(this) > PetObject2.RangeHate && PetObject2.HateObject.仇恨列表.TryGetValue(this, out 仇恨详情3) && 仇恨详情3.仇恨时间 < MainProcess.CurrentTime)
+                    HateObject.HateDetail 仇恨详情3;
+                    if (PetObject2.GetDistance(this) > PetObject2.RangeHate && PetObject2.HateObject.HateDic.TryGetValue(this, out 仇恨详情3) && 仇恨详情3.HateTime < MainProcess.CurrentTime)
                     {
-                        PetObject2.HateObject.移除仇恨(this);
+                        PetObject2.HateObject.RemoveHateObject(this);
                         return;
                     }
                 }
@@ -1894,13 +1894,13 @@ namespace GameServer.Maps
                     {
                         if (MonsterObject2.GetDistance(this) <= MonsterObject2.RangeHate && MonsterObject2.CanAttack(this) && (MonsterObject2.VisibleStealthTargets || !this.CheckStatus(GameObjectState.Invisibility | GameObjectState.StealthStatus)))
                         {
-                            MonsterObject2.HateObject.添加仇恨(this, default(DateTime), 0);
+                            MonsterObject2.HateObject.AddHateObject(this, default(DateTime), 0);
                             return;
                         }
-                        HateObject.仇恨详情 仇恨详情4;
-                        if (MonsterObject2.GetDistance(this) > MonsterObject2.RangeHate && MonsterObject2.HateObject.仇恨列表.TryGetValue(this, out 仇恨详情4) && 仇恨详情4.仇恨时间 < MainProcess.CurrentTime)
+                        HateObject.HateDetail 仇恨详情4;
+                        if (MonsterObject2.GetDistance(this) > MonsterObject2.RangeHate && MonsterObject2.HateObject.HateDic.TryGetValue(this, out 仇恨详情4) && 仇恨详情4.HateTime < MainProcess.CurrentTime)
                         {
-                            MonsterObject2.HateObject.移除仇恨(this);
+                            MonsterObject2.HateObject.RemoveHateObject(this);
                             return;
                         }
                     }
@@ -1922,12 +1922,12 @@ namespace GameServer.Maps
                             {
                                 if (GuardInstance2.CanAttack(this) && GuardInstance2.GetDistance(this) <= GuardInstance2.RangeHate)
                                 {
-                                    GuardInstance2.HateObject.添加仇恨(this, default(DateTime), 0);
+                                    GuardInstance2.HateObject.AddHateObject(this, default(DateTime), 0);
                                     return;
                                 }
                                 if (GuardInstance2.GetDistance(this) > GuardInstance2.RangeHate)
                                 {
-                                    GuardInstance2.HateObject.移除仇恨(this);
+                                    GuardInstance2.HateObject.RemoveHateObject(this);
                                 }
                             }
                         }
@@ -2068,13 +2068,13 @@ namespace GameServer.Maps
                 {
                     if (this.GetDistance(对象) <= PetObject.RangeHate && PetObject.CanAttack(对象) && !对象.CheckStatus(GameObjectState.Invisibility | GameObjectState.StealthStatus))
                     {
-                        PetObject.HateObject.添加仇恨(对象, default(DateTime), 0);
+                        PetObject.HateObject.AddHateObject(对象, default(DateTime), 0);
                         return;
                     }
-                    HateObject.仇恨详情 仇恨详情;
-                    if (this.GetDistance(对象) > PetObject.RangeHate && PetObject.HateObject.仇恨列表.TryGetValue(对象, out 仇恨详情) && 仇恨详情.仇恨时间 < MainProcess.CurrentTime)
+                    HateObject.HateDetail 仇恨详情;
+                    if (this.GetDistance(对象) > PetObject.RangeHate && PetObject.HateObject.HateDic.TryGetValue(对象, out 仇恨详情) && 仇恨详情.HateTime < MainProcess.CurrentTime)
                     {
-                        PetObject.HateObject.移除仇恨(对象);
+                        PetObject.HateObject.RemoveHateObject(对象);
                         return;
                     }
                 }
@@ -2082,13 +2082,13 @@ namespace GameServer.Maps
                 {
                     if (this.GetDistance(对象) <= MonsterObject.RangeHate && MonsterObject.CanAttack(对象) && (MonsterObject.VisibleStealthTargets || !对象.CheckStatus(GameObjectState.Invisibility | GameObjectState.StealthStatus)))
                     {
-                        MonsterObject.HateObject.添加仇恨(对象, default(DateTime), 0);
+                        MonsterObject.HateObject.AddHateObject(对象, default(DateTime), 0);
                         return;
                     }
-                    HateObject.仇恨详情 仇恨详情2;
-                    if (this.GetDistance(对象) > MonsterObject.RangeHate && MonsterObject.HateObject.仇恨列表.TryGetValue(对象, out 仇恨详情2) && 仇恨详情2.仇恨时间 < MainProcess.CurrentTime)
+                    HateObject.HateDetail 仇恨详情2;
+                    if (this.GetDistance(对象) > MonsterObject.RangeHate && MonsterObject.HateObject.HateDic.TryGetValue(对象, out 仇恨详情2) && 仇恨详情2.HateTime < MainProcess.CurrentTime)
                     {
-                        MonsterObject.HateObject.移除仇恨(对象);
+                        MonsterObject.HateObject.RemoveHateObject(对象);
                         return;
                     }
                 }
@@ -2242,13 +2242,13 @@ namespace GameServer.Maps
                     {
                         if (this.GetDistance(对象) <= PetObject2.RangeHate && PetObject2.CanAttack(对象) && !对象.CheckStatus(GameObjectState.Invisibility | GameObjectState.StealthStatus))
                         {
-                            PetObject2.HateObject.添加仇恨(对象, default(DateTime), 0);
+                            PetObject2.HateObject.AddHateObject(对象, default(DateTime), 0);
                             return;
                         }
-                        HateObject.仇恨详情 仇恨详情3;
-                        if (this.GetDistance(对象) > PetObject2.RangeHate && PetObject2.HateObject.仇恨列表.TryGetValue(对象, out 仇恨详情3) && 仇恨详情3.仇恨时间 < MainProcess.CurrentTime)
+                        HateObject.HateDetail 仇恨详情3;
+                        if (this.GetDistance(对象) > PetObject2.RangeHate && PetObject2.HateObject.HateDic.TryGetValue(对象, out 仇恨详情3) && 仇恨详情3.HateTime < MainProcess.CurrentTime)
                         {
-                            PetObject2.HateObject.移除仇恨(对象);
+                            PetObject2.HateObject.RemoveHateObject(对象);
                             return;
                         }
                     }
@@ -2257,14 +2257,14 @@ namespace GameServer.Maps
                 {
                     if (!this.Died)
                     {
-                        HateObject.仇恨详情 仇恨详情4;
+                        HateObject.HateDetail 仇恨详情4;
                         if (this.GetDistance(对象) <= MonsterObject2.RangeHate && MonsterObject2.CanAttack(对象) && (MonsterObject2.VisibleStealthTargets || !对象.CheckStatus(GameObjectState.Invisibility | GameObjectState.StealthStatus)))
                         {
-                            MonsterObject2.HateObject.添加仇恨(对象, default(DateTime), 0);
+                            MonsterObject2.HateObject.AddHateObject(对象, default(DateTime), 0);
                         }
-                        else if (this.GetDistance(对象) > MonsterObject2.RangeHate && MonsterObject2.HateObject.仇恨列表.TryGetValue(对象, out 仇恨详情4) && 仇恨详情4.仇恨时间 < MainProcess.CurrentTime)
+                        else if (this.GetDistance(对象) > MonsterObject2.RangeHate && MonsterObject2.HateObject.HateDic.TryGetValue(对象, out 仇恨详情4) && 仇恨详情4.HateTime < MainProcess.CurrentTime)
                         {
-                            MonsterObject2.HateObject.移除仇恨(对象);
+                            MonsterObject2.HateObject.RemoveHateObject(对象);
                         }
                         if (this.NeighborsImportant.Count != 0)
                         {
@@ -2279,11 +2279,11 @@ namespace GameServer.Maps
                     {
                         if (GuardInstance.CanAttack(对象) && this.GetDistance(对象) <= GuardInstance.RangeHate)
                         {
-                            GuardInstance.HateObject.添加仇恨(对象, default(DateTime), 0);
+                            GuardInstance.HateObject.AddHateObject(对象, default(DateTime), 0);
                         }
                         else if (this.GetDistance(对象) > GuardInstance.RangeHate)
                         {
-                            GuardInstance.HateObject.移除仇恨(对象);
+                            GuardInstance.HateObject.RemoveHateObject(对象);
                         }
                         if (this.NeighborsImportant.Count != 0)
                         {
@@ -2315,7 +2315,7 @@ namespace GameServer.Maps
                     PetObject PetObject = this as PetObject;
                     if (PetObject != null)
                     {
-                        PetObject.HateObject.移除仇恨(对象);
+                        PetObject.HateObject.RemoveHateObject(对象);
                         return;
                     }
                     MonsterObject MonsterObject = this as MonsterObject;
@@ -2323,7 +2323,7 @@ namespace GameServer.Maps
                     {
                         if (!this.Died)
                         {
-                            MonsterObject.HateObject.移除仇恨(对象);
+                            MonsterObject.HateObject.RemoveHateObject(对象);
                             if (MonsterObject.NeighborsImportant.Count == 0)
                             {
                                 MonsterObject.怪物沉睡处理();
@@ -2336,7 +2336,7 @@ namespace GameServer.Maps
                         GuardObject GuardInstance = this as GuardObject;
                         if (GuardInstance != null && !this.Died)
                         {
-                            GuardInstance.HateObject.移除仇恨(对象);
+                            GuardInstance.HateObject.RemoveHateObject(对象);
                             if (GuardInstance.NeighborsImportant.Count == 0)
                             {
                                 GuardInstance.守卫沉睡处理();
@@ -2353,19 +2353,19 @@ namespace GameServer.Maps
             MonsterObject MonsterObject = this as MonsterObject;
             if (MonsterObject != null)
             {
-                MonsterObject.HateObject.移除仇恨(对象);
+                MonsterObject.HateObject.RemoveHateObject(对象);
                 return;
             }
             PetObject PetObject = this as PetObject;
             if (PetObject != null)
             {
-                PetObject.HateObject.移除仇恨(对象);
+                PetObject.HateObject.RemoveHateObject(对象);
                 return;
             }
             GuardObject GuardInstance = this as GuardObject;
             if (GuardInstance != null)
             {
-                GuardInstance.HateObject.移除仇恨(对象);
+                GuardInstance.HateObject.RemoveHateObject(对象);
                 return;
             }
         }
@@ -2374,14 +2374,14 @@ namespace GameServer.Maps
         public void 对象隐身时处理(MapObject 对象)
         {
             PetObject PetObject = this as PetObject;
-            if (PetObject != null && PetObject.HateObject.仇恨列表.ContainsKey(对象))
+            if (PetObject != null && PetObject.HateObject.HateDic.ContainsKey(对象))
             {
-                PetObject.HateObject.移除仇恨(对象);
+                PetObject.HateObject.RemoveHateObject(对象);
             }
             MonsterObject MonsterObject = this as MonsterObject;
-            if (MonsterObject != null && MonsterObject.HateObject.仇恨列表.ContainsKey(对象) && !MonsterObject.VisibleStealthTargets)
+            if (MonsterObject != null && MonsterObject.HateObject.HateDic.ContainsKey(对象) && !MonsterObject.VisibleStealthTargets)
             {
-                MonsterObject.HateObject.移除仇恨(对象);
+                MonsterObject.HateObject.RemoveHateObject(对象);
             }
         }
 
@@ -2391,18 +2391,18 @@ namespace GameServer.Maps
             PetObject PetObject = this as PetObject;
             if (PetObject != null)
             {
-                if (PetObject.HateObject.仇恨列表.ContainsKey(对象))
+                if (PetObject.HateObject.HateDic.ContainsKey(对象))
                 {
-                    PetObject.HateObject.移除仇恨(对象);
+                    PetObject.HateObject.RemoveHateObject(对象);
                 }
                 this.NeighborsSneak.Add(对象);
             }
             MonsterObject MonsterObject = this as MonsterObject;
             if (MonsterObject != null && !MonsterObject.VisibleStealthTargets)
             {
-                if (MonsterObject.HateObject.仇恨列表.ContainsKey(对象))
+                if (MonsterObject.HateObject.HateDic.ContainsKey(对象))
                 {
-                    MonsterObject.HateObject.移除仇恨(对象);
+                    MonsterObject.HateObject.RemoveHateObject(对象);
                 }
                 this.NeighborsSneak.Add(对象);
             }
@@ -2423,14 +2423,14 @@ namespace GameServer.Maps
             PetObject PetObject = this as PetObject;
             if (PetObject != null)
             {
-                HateObject.仇恨详情 仇恨详情;
+                HateObject.HateDetail 仇恨详情;
                 if (this.GetDistance(对象) <= PetObject.RangeHate && PetObject.CanAttack(对象) && !对象.CheckStatus(GameObjectState.Invisibility | GameObjectState.StealthStatus))
                 {
-                    PetObject.HateObject.添加仇恨(对象, default(DateTime), 0);
+                    PetObject.HateObject.AddHateObject(对象, default(DateTime), 0);
                 }
-                else if (this.GetDistance(对象) > PetObject.RangeHate && PetObject.HateObject.仇恨列表.TryGetValue(对象, out 仇恨详情) && 仇恨详情.仇恨时间 < MainProcess.CurrentTime)
+                else if (this.GetDistance(对象) > PetObject.RangeHate && PetObject.HateObject.HateDic.TryGetValue(对象, out 仇恨详情) && 仇恨详情.HateTime < MainProcess.CurrentTime)
                 {
-                    PetObject.HateObject.移除仇恨(对象);
+                    PetObject.HateObject.RemoveHateObject(对象);
                 }
             }
             MonsterObject MonsterObject = this as MonsterObject;
@@ -2438,13 +2438,13 @@ namespace GameServer.Maps
             {
                 if (this.GetDistance(对象) <= MonsterObject.RangeHate && MonsterObject.CanAttack(对象) && (MonsterObject.VisibleStealthTargets || !对象.CheckStatus(GameObjectState.Invisibility | GameObjectState.StealthStatus)))
                 {
-                    MonsterObject.HateObject.添加仇恨(对象, default(DateTime), 0);
+                    MonsterObject.HateObject.AddHateObject(对象, default(DateTime), 0);
                     return;
                 }
-                HateObject.仇恨详情 仇恨详情2;
-                if (this.GetDistance(对象) > MonsterObject.RangeHate && MonsterObject.HateObject.仇恨列表.TryGetValue(对象, out 仇恨详情2) && 仇恨详情2.仇恨时间 < MainProcess.CurrentTime)
+                HateObject.HateDetail 仇恨详情2;
+                if (this.GetDistance(对象) > MonsterObject.RangeHate && MonsterObject.HateObject.HateDic.TryGetValue(对象, out 仇恨详情2) && 仇恨详情2.HateTime < MainProcess.CurrentTime)
                 {
-                    MonsterObject.HateObject.移除仇恨(对象);
+                    MonsterObject.HateObject.RemoveHateObject(对象);
                 }
             }
         }

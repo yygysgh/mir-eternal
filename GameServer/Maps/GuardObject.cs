@@ -320,7 +320,7 @@ namespace GameServer.Maps
                     {
                         this.守卫智能Attack();
                     }
-                    else if (this.HateObject.仇恨列表.Count == 0 && this.CanBeTurned())
+                    else if (this.HateObject.HateDic.Count == 0 && this.CanBeTurned())
                     {
                         this.CurrentDirection = this.出生方向;
                     }
@@ -384,14 +384,14 @@ namespace GameServer.Maps
             if (CheckStatus(GameObjectState.Paralyzed | GameObjectState.Absence) || BasicAttackSkills == null)
                 return;
 
-            if (GetDistance(HateObject.当前目标) > BasicAttackSkills.MaxDistance)
+            if (GetDistance(HateObject.CurrentTarget) > BasicAttackSkills.MaxDistance)
             {
-                HateObject.移除仇恨(HateObject.当前目标);
+                HateObject.RemoveHateObject(HateObject.CurrentTarget);
             }
             else
             {
                 GameSkills 技能模板 = BasicAttackSkills;
-                new SkillInstance(this, 技能模板, null, ActionId++, this.CurrentMap, this.CurrentPosition, this.HateObject.当前目标, this.HateObject.当前目标.CurrentPosition, null, null, false);
+                new SkillInstance(this, 技能模板, null, ActionId++, this.CurrentMap, this.CurrentPosition, this.HateObject.CurrentTarget, this.HateObject.CurrentTarget.CurrentPosition, null, null, false);
             }
         }
 
@@ -415,38 +415,38 @@ namespace GameServer.Maps
 
         public bool 更新HateObject()
         {
-            if (this.HateObject.仇恨列表.Count == 0)
+            if (this.HateObject.HateDic.Count == 0)
             {
                 return false;
             }
-            if (this.HateObject.当前目标 == null)
+            if (this.HateObject.CurrentTarget == null)
             {
                 return this.HateObject.切换仇恨(this);
             }
-            if (this.HateObject.当前目标.Died)
+            if (this.HateObject.CurrentTarget.Died)
             {
-                this.HateObject.移除仇恨(this.HateObject.当前目标);
+                this.HateObject.RemoveHateObject(this.HateObject.CurrentTarget);
             }
-            else if (!this.Neighbors.Contains(this.HateObject.当前目标))
+            else if (!this.Neighbors.Contains(this.HateObject.CurrentTarget))
             {
-                this.HateObject.移除仇恨(this.HateObject.当前目标);
+                this.HateObject.RemoveHateObject(this.HateObject.CurrentTarget);
             }
-            else if (!this.HateObject.仇恨列表.ContainsKey(this.HateObject.当前目标))
+            else if (!this.HateObject.HateDic.ContainsKey(this.HateObject.CurrentTarget))
             {
-                this.HateObject.移除仇恨(this.HateObject.当前目标);
+                this.HateObject.RemoveHateObject(this.HateObject.CurrentTarget);
             }
-            else if (base.GetDistance(this.HateObject.当前目标) > this.RangeHate)
+            else if (base.GetDistance(this.HateObject.CurrentTarget) > this.RangeHate)
             {
-                this.HateObject.移除仇恨(this.HateObject.当前目标);
+                this.HateObject.RemoveHateObject(this.HateObject.CurrentTarget);
             }
-            return this.HateObject.当前目标 != null || this.更新HateObject();
+            return this.HateObject.CurrentTarget != null || this.更新HateObject();
         }
 
 
         public void 清空守卫仇恨()
         {
-            this.HateObject.当前目标 = null;
-            this.HateObject.仇恨列表.Clear();
+            this.HateObject.CurrentTarget = null;
+            this.HateObject.HateDic.Clear();
         }
 
 

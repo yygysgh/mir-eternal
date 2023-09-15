@@ -3818,7 +3818,7 @@ namespace GameServer.Maps
             {
                 if (PetObject.Neighbors.Contains(对象) && !对象.CheckStatus(GameObjectState.Invisibility | GameObjectState.StealthStatus))
                 {
-                    PetObject.HateObject.添加仇恨(对象, default(DateTime), 0);
+                    PetObject.HateObject.AddHateObject(对象, default(DateTime), 0);
                 }
             }
         }
@@ -4673,7 +4673,7 @@ namespace GameServer.Maps
             {
                 foreach (PetObject PetObject in this.Pets.ToList<PetObject>())
                 {
-                    PetObject.HateObject.仇恨列表.Clear();
+                    PetObject.HateObject.HateDic.Clear();
                 }
                 this.PetMode = PetMode.Attack;
                 return;

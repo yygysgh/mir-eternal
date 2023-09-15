@@ -545,24 +545,24 @@ namespace GameServer.Maps
         }
         if (MainProcess.CurrentTime > this.BusyTime && MainProcess.CurrentTime > this.HardTime)
         {
-          if (this.EnterCombatSkills != null && !base.FightingStance && this.HateObject.仇恨列表.Count != 0)
+          if (this.EnterCombatSkills != null && !base.FightingStance && this.HateObject.HateDic.Count != 0)
           {
             new SkillInstance(this, EnterCombatSkills, null, ActionId++, this.CurrentMap, this.CurrentPosition, null, this.CurrentPosition, null, null, false);
             base.FightingStance = true;
             base.TimeoutTime = MainProcess.CurrentTime.AddSeconds(10.0);
           }
-          else if (this.ExitCombatSkills != null && base.FightingStance && this.HateObject.仇恨列表.Count == 0 && MainProcess.CurrentTime > base.TimeoutTime)
+          else if (this.ExitCombatSkills != null && base.FightingStance && this.HateObject.HateDic.Count == 0 && MainProcess.CurrentTime > base.TimeoutTime)
           {
             new SkillInstance(this, ExitCombatSkills, null, ActionId++, this.CurrentMap, this.CurrentPosition, null, this.CurrentPosition, null, null, false);
             FightingStance = false;
           }
-          else if (this.Template.OutWarAutomaticPetrochemical && !base.FightingStance && this.HateObject.仇恨列表.Count != 0)
+          else if (this.Template.OutWarAutomaticPetrochemical && !base.FightingStance && this.HateObject.HateDic.Count != 0)
           {
             base.FightingStance = true;
             base.移除Buff时处理(this.Template.PetrochemicalStatusId);
             base.TimeoutTime = MainProcess.CurrentTime.AddSeconds(10.0);
           }
-          else if (this.Template.OutWarAutomaticPetrochemical && base.FightingStance && this.HateObject.仇恨列表.Count == 0 && MainProcess.CurrentTime > base.TimeoutTime)
+          else if (this.Template.OutWarAutomaticPetrochemical && base.FightingStance && this.HateObject.HateDic.Count == 0 && MainProcess.CurrentTime > base.TimeoutTime)
           {
             base.FightingStance = false;
             base.OnAddBuff(this.Template.PetrochemicalStatusId, this);
@@ -882,11 +882,11 @@ namespace GameServer.Maps
       {
         return;
       }
-      if (base.GetDistance(this.HateObject.当前目标) > (int)游戏技能.MaxDistance)
+      if (base.GetDistance(this.HateObject.CurrentTarget) > (int)游戏技能.MaxDistance)
       {
         if (!this.ForbbidenMove && this.CanMove())
         {
-          GameDirection GameDirection = ComputingClass.GetDirection(this.CurrentPosition, this.HateObject.当前目标.CurrentPosition);
+          GameDirection GameDirection = ComputingClass.GetDirection(this.CurrentPosition, this.HateObject.CurrentTarget.CurrentPosition);
           Point point = default(Point);
           for (int i = 0; i < 8; i++)
           {
@@ -909,11 +909,11 @@ namespace GameServer.Maps
           return;
         }
       }
-      else if (游戏技能.NeedMoveForward && !ComputingClass.直线方向(this.CurrentPosition, this.HateObject.当前目标.CurrentPosition))
+      else if (游戏技能.NeedMoveForward && !ComputingClass.直线方向(this.CurrentPosition, this.HateObject.CurrentTarget.CurrentPosition))
       {
         if (!this.ForbbidenMove && this.CanMove())
         {
-          GameDirection GameDirection2 = ComputingClass.正向方向(this.CurrentPosition, this.HateObject.当前目标.CurrentPosition);
+          GameDirection GameDirection2 = ComputingClass.正向方向(this.CurrentPosition, this.HateObject.CurrentTarget.CurrentPosition);
           Point point2 = default(Point);
           for (int j = 0; j < 8; j++)
           {
@@ -943,13 +943,13 @@ namespace GameServer.Maps
       {
         if (MainProcess.CurrentTime > this.Attack时间)
         {
-          new SkillInstance(this, 游戏技能, null, ActionId++, this.CurrentMap, this.CurrentPosition, this.HateObject.当前目标, this.HateObject.当前目标.CurrentPosition, null, null, false);
+          new SkillInstance(this, 游戏技能, null, ActionId++, this.CurrentMap, this.CurrentPosition, this.HateObject.CurrentTarget, this.HateObject.CurrentTarget.CurrentPosition, null, null, false);
           this.Attack时间 = MainProcess.CurrentTime.AddMilliseconds((double)(ComputingClass.ValueLimit(0, 10 - this[GameObjectStats.AttackSpeed], 10) * 500));
           return;
         }
         if (!this.ForbbidenMove && this.CanBeTurned())
         {
-          this.CurrentDirection = ComputingClass.GetDirection(this.CurrentPosition, this.HateObject.当前目标.CurrentPosition);
+          this.CurrentDirection = ComputingClass.GetDirection(this.CurrentPosition, this.HateObject.CurrentTarget.CurrentPosition);
         }
       }
     }
@@ -1061,107 +1061,107 @@ namespace GameServer.Maps
 
     public bool 更新HateObject()
     {
-      if (this.HateObject.仇恨列表.Count == 0)
+      if (this.HateObject.HateDic.Count == 0)
       {
         return false;
       }
-      if (this.HateObject.当前目标 == null)
+      if (this.HateObject.CurrentTarget == null)
       {
-        this.HateObject.切换时间 = default(DateTime);
+        this.HateObject.SwitchTime = default(DateTime);
       }
-      else if (this.HateObject.当前目标.Died)
+      else if (this.HateObject.CurrentTarget.Died)
       {
-        this.HateObject.移除仇恨(this.HateObject.当前目标);
+        this.HateObject.RemoveHateObject(this.HateObject.CurrentTarget);
       }
-      else if (!this.Neighbors.Contains(this.HateObject.当前目标))
+      else if (!this.Neighbors.Contains(this.HateObject.CurrentTarget))
       {
-        this.HateObject.移除仇恨(this.HateObject.当前目标);
+        this.HateObject.RemoveHateObject(this.HateObject.CurrentTarget);
       }
-      else if (!this.HateObject.仇恨列表.ContainsKey(this.HateObject.当前目标))
+      else if (!this.HateObject.HateDic.ContainsKey(this.HateObject.CurrentTarget))
       {
-        this.HateObject.移除仇恨(this.HateObject.当前目标);
+        this.HateObject.RemoveHateObject(this.HateObject.CurrentTarget);
       }
-      else if (base.GetDistance(this.HateObject.当前目标) > this.RangeHate && MainProcess.CurrentTime > this.HateObject.仇恨列表[this.HateObject.当前目标].仇恨时间)
+      else if (base.GetDistance(this.HateObject.CurrentTarget) > this.RangeHate && MainProcess.CurrentTime > this.HateObject.HateDic[this.HateObject.CurrentTarget].HateTime)
       {
-        this.HateObject.移除仇恨(this.HateObject.当前目标);
+        this.HateObject.RemoveHateObject(this.HateObject.CurrentTarget);
       }
-      else if (base.GetDistance(this.HateObject.当前目标) <= this.RangeHate)
+      else if (base.GetDistance(this.HateObject.CurrentTarget) <= this.RangeHate)
       {
-        this.HateObject.仇恨列表[this.HateObject.当前目标].仇恨时间 = MainProcess.CurrentTime.AddMilliseconds((double)this.HateTime);
+        this.HateObject.HateDic[this.HateObject.CurrentTarget].HateTime = MainProcess.CurrentTime.AddMilliseconds((double)this.HateTime);
       }
-      if (this.HateObject.切换时间 < MainProcess.CurrentTime && this.HateObject.切换仇恨(this))
+      if (this.HateObject.SwitchTime < MainProcess.CurrentTime && this.HateObject.切换仇恨(this))
       {
-        this.HateObject.切换时间 = MainProcess.CurrentTime.AddMilliseconds((double)this.切换间隔);
+        this.HateObject.SwitchTime = MainProcess.CurrentTime.AddMilliseconds((double)this.切换间隔);
       }
-      return this.HateObject.当前目标 != null || this.更新HateObject();
+      return this.HateObject.CurrentTarget != null || this.更新HateObject();
     }
 
 
     public bool 更新最近仇恨()
     {
-      if (this.HateObject.仇恨列表.Count == 0)
+      if (this.HateObject.HateDic.Count == 0)
       {
         return false;
       }
-      if (this.HateObject.当前目标 == null)
+      if (this.HateObject.CurrentTarget == null)
       {
-        this.HateObject.切换时间 = default(DateTime);
+        this.HateObject.SwitchTime = default(DateTime);
       }
-      else if (this.HateObject.当前目标.Died)
+      else if (this.HateObject.CurrentTarget.Died)
       {
-        this.HateObject.移除仇恨(this.HateObject.当前目标);
+        this.HateObject.RemoveHateObject(this.HateObject.CurrentTarget);
       }
-      else if (!this.Neighbors.Contains(this.HateObject.当前目标))
+      else if (!this.Neighbors.Contains(this.HateObject.CurrentTarget))
       {
-        this.HateObject.移除仇恨(this.HateObject.当前目标);
+        this.HateObject.RemoveHateObject(this.HateObject.CurrentTarget);
       }
-      else if (!this.HateObject.仇恨列表.ContainsKey(this.HateObject.当前目标))
+      else if (!this.HateObject.HateDic.ContainsKey(this.HateObject.CurrentTarget))
       {
-        this.HateObject.移除仇恨(this.HateObject.当前目标);
+        this.HateObject.RemoveHateObject(this.HateObject.CurrentTarget);
       }
-      else if (base.GetDistance(this.HateObject.当前目标) > this.RangeHate && MainProcess.CurrentTime > this.HateObject.仇恨列表[this.HateObject.当前目标].仇恨时间)
+      else if (base.GetDistance(this.HateObject.CurrentTarget) > this.RangeHate && MainProcess.CurrentTime > this.HateObject.HateDic[this.HateObject.CurrentTarget].HateTime)
       {
-        this.HateObject.移除仇恨(this.HateObject.当前目标);
+        this.HateObject.RemoveHateObject(this.HateObject.CurrentTarget);
       }
-      else if (base.GetDistance(this.HateObject.当前目标) <= this.RangeHate)
+      else if (base.GetDistance(this.HateObject.CurrentTarget) <= this.RangeHate)
       {
-        this.HateObject.仇恨列表[this.HateObject.当前目标].仇恨时间 = MainProcess.CurrentTime.AddMilliseconds((double)this.HateTime);
+        this.HateObject.HateDic[this.HateObject.CurrentTarget].HateTime = MainProcess.CurrentTime.AddMilliseconds((double)this.HateTime);
       }
-      if (this.HateObject.切换时间 < MainProcess.CurrentTime && this.HateObject.最近仇恨(this))
+      if (this.HateObject.SwitchTime < MainProcess.CurrentTime && this.HateObject.最近仇恨(this))
       {
-        this.HateObject.切换时间 = MainProcess.CurrentTime.AddMilliseconds((double)this.切换间隔);
+        this.HateObject.SwitchTime = MainProcess.CurrentTime.AddMilliseconds((double)this.切换间隔);
       }
-      return this.HateObject.当前目标 != null || this.更新HateObject();
+      return this.HateObject.CurrentTarget != null || this.更新HateObject();
     }
 
 
     public void 清空怪物仇恨()
     {
-      this.HateObject.当前目标 = null;
-      this.HateObject.仇恨列表.Clear();
+      this.HateObject.CurrentTarget = null;
+      this.HateObject.HateDic.Clear();
     }
 
 
     public bool GetPlayerAttributionKill(out PlayerObject 归属玩家)
     {
-      foreach (KeyValuePair<MapObject, HateObject.仇恨详情> keyValuePair in this.HateObject.仇恨列表.ToList<KeyValuePair<MapObject, HateObject.仇恨详情>>())
+      foreach (KeyValuePair<MapObject, HateObject.HateDetail> keyValuePair in this.HateObject.HateDic.ToList<KeyValuePair<MapObject, HateObject.HateDetail>>())
       {
         PetObject PetObject = keyValuePair.Key as PetObject;
         if (PetObject != null)
         {
-          if (keyValuePair.Value.仇恨Value > 0)
+          if (keyValuePair.Value.HateValue > 0)
           {
-            this.HateObject.添加仇恨(PetObject.PlayerOwner, keyValuePair.Value.仇恨时间, keyValuePair.Value.仇恨Value);
+            this.HateObject.AddHateObject(PetObject.PlayerOwner, keyValuePair.Value.HateTime, keyValuePair.Value.HateValue);
           }
-          this.HateObject.移除仇恨(keyValuePair.Key);
+          this.HateObject.RemoveHateObject(keyValuePair.Key);
         }
         else if (!(keyValuePair.Key is PlayerObject))
         {
-          this.HateObject.移除仇恨(keyValuePair.Key);
+          this.HateObject.RemoveHateObject(keyValuePair.Key);
         }
       }
-      MapObject MapObject = (from x in this.HateObject.仇恨列表.Keys.ToList<MapObject>()
-                             orderby this.HateObject.仇恨列表[x].仇恨Value descending
+      MapObject MapObject = (from x in this.HateObject.HateDic.Keys.ToList<MapObject>()
+                             orderby this.HateObject.HateDic[x].HateValue descending
                              select x).FirstOrDefault<MapObject>();
       PlayerObject PlayerObject2;
       if (MapObject != null)

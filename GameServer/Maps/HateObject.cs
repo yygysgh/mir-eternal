@@ -11,57 +11,57 @@ namespace GameServer.Maps
 		{
 			
 			
-			this.仇恨列表 = new Dictionary<MapObject, HateObject.仇恨详情>();
+			this.HateDic = new Dictionary<MapObject, HateObject.HateDetail>();
 		}
 
 		
-		public bool 移除仇恨(MapObject 对象)
+		public bool RemoveHateObject(MapObject obj)
 		{
-			if (this.当前目标 == 对象)
+			if (this.CurrentTarget == obj)
 			{
-				this.当前目标 = null;
+				this.CurrentTarget = null;
 			}
-			return this.仇恨列表.Remove(对象);
+			return this.HateDic.Remove(obj);
 		}
 
 		
-		public void 添加仇恨(MapObject 对象, DateTime 时间, int 仇恨Value)
+		public void AddHateObject(MapObject obj, DateTime time, int hateValue)
 		{
-			if (对象.Died)
+			if (obj.Died)
 			{
 				return;
 			}
-			HateObject.仇恨详情 仇恨详情;
-			if (this.仇恨列表.TryGetValue(对象, out 仇恨详情))
+			HateObject.HateDetail hateDetail;
+			if (this.HateDic.TryGetValue(obj, out hateDetail))
 			{
-				仇恨详情.仇恨时间 = ((仇恨详情.仇恨时间 < 时间) ? 时间 : 仇恨详情.仇恨时间);
-				仇恨详情.仇恨Value += 仇恨Value;
+				hateDetail.HateTime = ((hateDetail.HateTime < time) ? time : hateDetail.HateTime);
+				hateDetail.HateValue += hateValue;
 				return;
 			}
-			this.仇恨列表[对象] = new HateObject.仇恨详情(时间, 仇恨Value);
+			this.HateDic[obj] = new HateObject.HateDetail(time, hateValue);
 		}
 
 		
-		public bool 切换仇恨(MapObject 主人)
+		public bool 切换仇恨(MapObject host)
 		{
 			int num = int.MinValue;
 			List<MapObject> list = new List<MapObject>();
-			foreach (KeyValuePair<MapObject, HateObject.仇恨详情> keyValuePair in this.仇恨列表)
+			foreach (KeyValuePair<MapObject, HateObject.HateDetail> keyValuePair in this.HateDic)
 			{
-				if (keyValuePair.Value.仇恨Value > num)
+				if (keyValuePair.Value.HateValue > num)
 				{
-					num = keyValuePair.Value.仇恨Value;
+					num = keyValuePair.Value.HateValue;
 					list = new List<MapObject>
 					{
 						keyValuePair.Key
 					};
 				}
-				else if (keyValuePair.Value.仇恨Value == num)
+				else if (keyValuePair.Value.HateValue == num)
 				{
 					list.Add(keyValuePair.Key);
 				}
 			}
-			if (num == 0 && this.当前目标 != null)
+			if (num == 0 && this.CurrentTarget != null)
 			{
 				return true;
 			}
@@ -69,7 +69,7 @@ namespace GameServer.Maps
 			MapObject MapObject = null;
 			foreach (MapObject MapObject2 in list)
 			{
-				int num3 = 主人.GetDistance(MapObject2);
+				int num3 = host.GetDistance(MapObject2);
 				if (num3 < num2)
 				{
 					num2 = num3;
@@ -79,23 +79,23 @@ namespace GameServer.Maps
 			PlayerObject PlayerObject = MapObject as PlayerObject;
 			if (PlayerObject != null)
 			{
-				PlayerObject.玩家获得仇恨(主人);
+				PlayerObject.玩家获得仇恨(host);
 			}
-			return (this.当前目标 = MapObject) != null;
+			return (this.CurrentTarget = MapObject) != null;
 		}
 
 		
 		public bool 最近仇恨(MapObject 主人)
 		{
 			int num = int.MaxValue;
-			List<KeyValuePair<MapObject, HateObject.仇恨详情>> list = new List<KeyValuePair<MapObject, HateObject.仇恨详情>>();
-			foreach (KeyValuePair<MapObject, HateObject.仇恨详情> item in this.仇恨列表)
+			List<KeyValuePair<MapObject, HateObject.HateDetail>> list = new List<KeyValuePair<MapObject, HateObject.HateDetail>>();
+			foreach (KeyValuePair<MapObject, HateObject.HateDetail> item in this.HateDic)
 			{
 				int num2 = 主人.GetDistance(item.Key);
 				if (num2 < num)
 				{
 					num = num2;
-					list = new List<KeyValuePair<MapObject, HateObject.仇恨详情>>
+					list = new List<KeyValuePair<MapObject, HateObject.HateDetail>>
 					{
 						item
 					};
@@ -107,11 +107,11 @@ namespace GameServer.Maps
 			}
 			int num3 = int.MinValue;
 			MapObject MapObject = null;
-			foreach (KeyValuePair<MapObject, HateObject.仇恨详情> keyValuePair in list)
+			foreach (KeyValuePair<MapObject, HateObject.HateDetail> keyValuePair in list)
 			{
-				if (keyValuePair.Value.仇恨Value > num3)
+				if (keyValuePair.Value.HateValue > num3)
 				{
-					num3 = keyValuePair.Value.仇恨Value;
+					num3 = keyValuePair.Value.HateValue;
 					MapObject = keyValuePair.Key;
 				}
 			}
@@ -120,35 +120,32 @@ namespace GameServer.Maps
 			{
 				PlayerObject.玩家获得仇恨(主人);
 			}
-			return (this.当前目标 = MapObject) != null;
+			return (this.CurrentTarget = MapObject) != null;
 		}
 
 		
-		public MapObject 当前目标;
+		public MapObject CurrentTarget;//当前目标
+
+
+        public DateTime SwitchTime;//切换时间
+
+
+        public readonly Dictionary<MapObject, HateObject.HateDetail> HateDic;
 
 		
-		public DateTime 切换时间;
-
-		
-		public readonly Dictionary<MapObject, HateObject.仇恨详情> 仇恨列表;
-
-		
-		public sealed class 仇恨详情
-		{
+		public sealed class HateDetail //仇恨详情
+        {
 			
-			public 仇恨详情(DateTime 仇恨时间, int 仇恨Value)
+			public HateDetail(DateTime hateTime, int hateValue)
 			{
-				
-				
-				this.仇恨Value = 仇恨Value;
-				this.仇恨时间 = 仇恨时间;
+				this.HateTime = hateTime;
+				this.HateValue = hateValue;
 			}
 
-			
-			public int 仇恨Value;
+		
+			public int HateValue;
 
-			
-			public DateTime 仇恨时间;
+			public DateTime HateTime;
 		}
 	}
 }
